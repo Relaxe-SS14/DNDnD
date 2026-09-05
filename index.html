@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Sealed Leaf</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   PALETTE — vellum, not the usual cream. Deeper, more amber,
+   mottled so it reads as animal skin rather than copier paper.
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --vellum:      #d9c69b;
+  --vellum-deep: #bda476;
+  --vellum-burn: #8f7043;
+  --ink:         #3a2a18;
+  --ink-thin:    #6b573a;
+  --torch:       #ffe9b3;
+  --hand: "IM FELL English", "Luminari", "Cochin", "Baskerville Old Face",
+          "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+
+  --radius: 75px;     /* flashlight reach, in px — tunable below */
+  --glyph:  26px;     /* glyph size */
+}
+
+*{ box-sizing:border-box; }
+
+html,body{ height:100%; }
+
+body{
+  margin:0;
+  background:
+    radial-gradient(120% 90% at 50% 0%,   #e4d3ac 0%, transparent 60%),
+    radial-gradient(140% 110% at 15% 100%, #c4a97a 0%, transparent 55%),
+    radial-gradient(90%  80% at 88% 30%,  #cbb383 0%, transparent 50%),
+    var(--vellum);
+  color:var(--ink);
+  font-family:var(--hand);
+  -webkit-text-size-adjust:100%;
+  overflow-x:hidden;
+}
+
+/* Fibre and blotch. An inline turbulence filter, so the file stays
+   entirely self-contained — no image requests. */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  opacity:.5; mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'>\
+<filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/>\
+<feColorMatrix type='saturate' values='0'/></filter>\
+<rect width='240' height='240' filter='url(%23f)' opacity='0.42'/></svg>");
+}
+
+/* Burnt-in edges. */
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:1;
+  background:radial-gradient(115% 95% at 50% 45%, transparent 52%, rgba(90,62,28,.42) 100%);
+  mix-blend-mode:multiply;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   THE GATE
+   ══════════════════════════════════════════════════════════════ */
+#gate{
+  position:fixed; inset:0; z-index:40;
+  display:grid; place-items:center; padding:24px;
+  background:rgba(58,42,24,.55);
+  backdrop-filter:blur(3px);
+  transition:opacity .7s ease;
+}
+#gate.gone{ opacity:0; pointer-events:none; }
+
+.seal{
+  width:min(430px,100%);
+  padding:38px 34px 32px;
+  background:
+    radial-gradient(120% 80% at 30% 10%, #e6d5ae, transparent 60%),
+    var(--vellum);
+  border:1px solid rgba(90,62,28,.5);
+  box-shadow:
+    0 1px 0 rgba(255,244,214,.7) inset,
+    0 22px 50px -18px rgba(40,26,10,.75);
+  text-align:center;
+}
+
+.seal h1{
+  margin:0 0 6px;
+  font-size:30px; font-weight:500; letter-spacing:.01em; line-height:1.25;
+}
+.seal p{
+  margin:0 0 24px;
+  font-size:16px; line-height:1.6; color:var(--ink-thin);
+  max-width:32ch; margin-inline:auto;
+}
+
+.seal input{
+  width:100%; padding:12px 14px;
+  font-family:var(--hand); font-size:19px; color:var(--ink);
+  text-align:center; letter-spacing:.04em;
+  background:rgba(255,248,226,.55);
+  border:1px solid rgba(90,62,28,.45);
+  border-radius:2px;
+  outline-offset:3px;
+}
+.seal input:focus-visible{ outline:2px solid var(--ink); }
+
+.seal button{
+  margin-top:14px; width:100%; padding:11px;
+  font-family:var(--hand); font-size:18px; letter-spacing:.03em;
+  color:var(--vellum); background:var(--ink);
+  border:none; border-radius:2px; cursor:pointer;
+  transition:background .18s ease;
+}
+.seal button:hover{ background:#291d10; }
+.seal button:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+
+#deny{
+  margin:12px 0 0; min-height:1.35em;
+  font-size:15px; color:var(--vellum-burn); opacity:0;
+  transition:opacity .2s ease;
+}
+#deny.show{ opacity:1; }
+
+.shake{ animation:shake .42s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake{
+  10%,90%{ transform:translateX(-2px); }
+  20%,80%{ transform:translateX(4px); }
+  30%,50%,70%{ transform:translateX(-7px); }
+  40%,60%{ transform:translateX(7px); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   THE LEAF
+   ══════════════════════════════════════════════════════════════ */
+#leaf{
+  position:relative; z-index:2;
+  max-width:66ch; margin:0 auto; padding:9vh 26px 22vh;
+}
+
+#title{
+  margin:0 0 1.6em;
+  font-size:clamp(26px,4.4vw,38px); font-weight:500; line-height:1.2;
+  color:var(--ink-thin);
+}
+
+#body{ line-height:2.35; }
+
+/* A word: cipher underneath, plain letters stacked exactly on top,
+   so revealing never shifts the layout by a pixel. */
+.w{
+  position:relative; display:inline-block;
+  vertical-align:baseline; margin:0 .06em;
+}
+.w .ciph{ display:inline-block; white-space:nowrap; }
+/* Revealing is quick; folding back takes twice as long, so the letters
+   linger a moment in the wake of the torch. */
+:root{ --reveal:110ms; --fold:220ms; }
+
+.w .plain{
+  position:absolute; left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  white-space:nowrap; opacity:0;
+  font-size:calc(var(--glyph) * 1.15);
+  transition:opacity var(--fold) ease;
+}
+.w .ciph{ transition:opacity var(--fold) ease; }
+.w.lit .ciph{ opacity:0; transition-duration:var(--reveal); }
+.w.lit .plain{ opacity:1; transition-duration:var(--reveal); }
+
+/* A separator is a word too: it folds out into the mark it stood for,
+   or into nothing at all when it was only ever a space. The mark is
+   pinned to the left edge rather than centred, so a full stop hugs the
+   word it follows instead of floating in the middle of the gap. */
+.w.sep{ margin:0 .04em; }
+.w.sep .plain{
+  left:0; transform:translate(-14%,-50%);
+  font-size:calc(var(--glyph) * 1.15);
+}
+
+/* Glyph drawing. One path per glyph holding several subpaths, so a
+   single dash-offset animation strokes them in order — it scratches
+   rather than fades. pathLength normalises the speed across shapes.
+   The dots are a second path of zero-length subpaths with round caps,
+   which renders as dots for one element instead of two circles. */
+.g{
+  width:calc(var(--glyph) * .82);
+  height:calc(var(--glyph) * .88);
+  vertical-align:-.16em; overflow:visible;
+}
+.g path{
+  fill:none; stroke:var(--ink);
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.g .wall{
+  stroke-width:7;
+  stroke-dasharray:1; stroke-dashoffset:1;
+  animation:scratch var(--dur) cubic-bezier(.55,.1,.3,1) var(--d) forwards;
+}
+.g .dot{
+  opacity:0;
+  animation:blot 90ms ease-out calc(var(--d) + var(--dur) * .72) forwards;
+}
+@keyframes scratch{ to{ stroke-dashoffset:0; } }
+@keyframes blot{ to{ opacity:1; } }
+
+/* Once the ink has dried, drop the animations entirely rather than
+   leaving thousands of finished ones filling forwards on the timeline. */
+#body.dry .wall{ animation:none; stroke-dashoffset:0; }
+#body.dry .dot{ animation:none; opacity:1; }
+
+/* ══════════════════════════════════════════════════════════════
+   THE TORCH
+   ══════════════════════════════════════════════════════════════ */
+#torch{
+  position:fixed; z-index:3; pointer-events:none;
+  left:0; top:0;
+  width:calc(var(--radius) * 4); height:calc(var(--radius) * 4);
+  background:radial-gradient(circle closest-side,
+    rgba(255,236,186,.85) 0%, rgba(255,228,160,.42) 42%, transparent 72%);
+  mix-blend-mode:screen;
+  opacity:0; transition:opacity .35s ease;
+  transform:translate3d(-9999px,-9999px,0);
+  will-change:transform;
+}
+#torch.on{ opacity:1; }
+
+/* ══════════════════════════════════════════════════════════════
+   THE DIAL
+   ══════════════════════════════════════════════════════════════ */
+#dial{
+  position:fixed; z-index:4; right:18px; bottom:16px;
+  display:flex; align-items:center; gap:10px;
+  padding:8px 13px;
+  font-size:14px; color:var(--ink-thin);
+  background:rgba(226,210,174,.72);
+  border:1px solid rgba(90,62,28,.34);
+  border-radius:2px;
+  opacity:.35; transition:opacity .25s ease;
+}
+#dial:hover, #dial:focus-within{ opacity:1; }
+#dial input{ width:96px; accent-color:var(--ink); }
+#dial output{ min-width:4ch; }
+
+#hint{
+  position:fixed; z-index:4; left:50%; bottom:18px;
+  transform:translateX(-50%);
+  font-size:15px; color:var(--ink-thin);
+  opacity:0; transition:opacity .8s ease;
+  pointer-events:none; text-align:center; padding-inline:16px;
+}
+#hint.show{ opacity:.8; }
+
+/* ══════════════════════════════════════════════════════════════
+   SMALL SCREENS — no cursor, so the beam rides the fingertip.
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width:640px){
+  :root{ --glyph:21px; }
+  #leaf{ padding:6vh 18px 26vh; }
+  #body{ line-height:2.2; }
+  #dial{ right:12px; bottom:12px; font-size:13px; }
+  #dial input{ width:78px; }
+}
+@media (hover:none){
+  #torch{ mix-blend-mode:screen; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .g .wall{ animation-duration:1ms; }
+  .g .dot{ animation-duration:1ms; }
+  #torch{ transition:none; }
+}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="seal" id="seal">
+    <h1>The Sealed Leaf</h1>
+    <p>This page keeps its letters folded. Name the continent to unfold them.</p>
+    <label for="key" style="position:absolute;left:-9999px;">Password</label>
+    <input id="key" type="text" autocomplete="off" autocapitalize="off"
+           autocorrect="off" spellcheck="false" placeholder="…">
+    <button id="unfold">Unfold the leaf</button>
+    <p id="deny">That is not the name. Try again.</p>
+  </div>
+</div>
+
+<main id="leaf" hidden>
+  <h2 id="title">For the Dungeon Master</h2>
+  <div id="body"></div>
+</main>
+
+<div id="torch"></div>
+
+<div id="dial" hidden>
+  <label for="rad">Torch</label>
+  <input id="rad" type="range" min="20" max="180" step="5" value="75">
+  <output id="radout">75</output>
+</div>
+
+<p id="hint"></p>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════
+   1. THE SECRET
+   Replace the string below with your own text. Punctuation is
+   welcome — it survives into the revealed layer but never
+   appears in the cipher.
+   ══════════════════════════════════════════════════════════════ */
+const SECRET_TEXT = `hey there DM.
+
+I have a couple of plans going into the next couple of sessions. I'm giving you this encoded message so that you have the ability to make suggestions or changes so we go into the role play on the same page.
+
+most notably, I would like to use my inspiration point to do a kind of cutscene, either during the night or shortly after we hit level 2. the intention is for my character to break the wedding ring that he has on his right hand and release the spirit of his dead wife. doing so will unlock my subclass feature for echo knight, using the inspiration point to level. I wanted to give some context for what I would like to role play for that interaction: my specter is going to be an NPC, and I want to give you some idea of what their motivations would be and personality would be like.
+
+Argus's wife Rendra is the shade of her former self, literally. previously, she had been haunting Argus' dreams, forcing August to relive the trauma of his interaction over and over and over again. the inability to save his wife, the agony of losing his arm, since the event. this is because his wedding ring has a gemstone that captured his wife's soul.
+
+when the ring brakes and argus's wife is set free, she will still be a specter of sorts haunting Argus and asking him to go back to his house. importantly, she doesn't know how she died or that she is dead. initially he's going to try to explain that the Black Star trading company that demolished his house will certainly kill him if he goes back and lays claim to his land. as a consequence, he'll tell her that he can go back home after he takes care of some "errands." it's going to be traumatic for him but I think his new plan is to try to find a new way to make a homestead so that his wife can rest in peace. The repeated line he's going to use is that he has to finish his chores/errands before he can go home. you're welcome to insert any roadblocks for communicating with the wife, such as needing to cast speak with the dead or something on those lines. also, for the sake of flavor, I plan on making my wife the echo for the purposes of combat.
+
+interested in whatever you have in terms of feedback. thanks for reading. (the website was vibe-coded by an AI, but everything else is by hand. cheers.)`;
+
+const PASSWORD = "Tropohundra";   // compared lowercased and trimmed
+
+/* Total time the writing-in should take, in milliseconds. The
+   per-glyph stagger is derived from this and the glyph count. */
+const WRITE_BUDGET = 10000;
+const STROKE_TIME  = 190;   // how long one glyph takes to draw
+const STAGGER_MIN  = 4;
+const STAGGER_MAX  = 34;
+
+/* ══════════════════════════════════════════════════════════════
+   2. THE ALPHABET
+   Three tic-tac-toe grids. Grid one is bare, grid two carries a
+   single centre dot, grid three carries two. Twenty-six letters
+   fill slots 0–25; slot 26 is the separator, which stands for a
+   space and for any mark that ends a sentence, without doubling.
+   ══════════════════════════════════════════════════════════════ */
+const WALLS = [
+  ["R","B"],       ["L","R","B"],     ["L","B"],
+  ["T","R","B"],   ["T","L","R","B"], ["T","L","B"],
+  ["T","R"],       ["T","L","R"],     ["T","L"]
+];
+
+const X0 = 16, X1 = 84, Y0 = 12, Y1 = 80;
+const SEPARATOR = 26;
+
+function glyphSVG(slot, delay){
+  const cell = slot % 9;
+  const dots = Math.floor(slot / 9);
+  const w = WALLS[cell];
+  const seg = [];
+  /* Order is deliberate: left, top, right, bottom. A dash-offset
+     sweep then draws the strokes in a plausible hand order. */
+  if (w.includes("L")) seg.push(`M${X0} ${Y0}L${X0} ${Y1}`);
+  if (w.includes("T")) seg.push(`M${X0} ${Y0}L${X1} ${Y0}`);
+  if (w.includes("R")) seg.push(`M${X1} ${Y0}L${X1} ${Y1}`);
+  if (w.includes("B")) seg.push(`M${X0} ${Y1}L${X1} ${Y1}`);
+
+  /* A zero-length subpath with a round cap renders as a filled circle,
+     so both dots ride on one path instead of two circle elements. */
+  let blots = "";
+  if (dots === 1){
+    blots = `<path class="dot" stroke-width="14" d="M50 46L50 46"/>`;
+  } else if (dots === 2){
+    blots = `<path class="dot" stroke-width="12" d="M35 46L35 46M65 46L65 46"/>`;
+  }
+
+  return `<svg class="g" viewBox="0 0 100 100" aria-hidden="true" ` +
+         `style="--d:${delay}ms;--dur:${STROKE_TIME}ms">` +
+         `<path class="wall" pathLength="1" d="${seg.join("")}"/>${blots}</svg>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   3. SETTING THE PAGE
+   ══════════════════════════════════════════════════════════════ */
+const bodyEl  = document.getElementById("body");
+const leafEl  = document.getElementById("leaf");
+const torchEl = document.getElementById("torch");
+const dialEl  = document.getElementById("dial");
+const hintEl  = document.getElementById("hint");
+
+let words = [];        // {el, readyAt, box}
+let radius = 50;
+let startedAt = 0;
+let coarse = window.matchMedia("(hover: none)").matches;
+
+function compose(){
+  const paras = SECRET_TEXT.trim().split(/\n\s*\n/);
+
+  /* Count first, so the stagger can be sized to the budget. */
+  let total = 0;
+  for (const p of paras){
+    for (const raw of p.trim().split(/\s+/)){
+      total += raw.toUpperCase().replace(/[^A-Z]/g, "").length + 1;
+    }
+  }
+  const stagger = Math.min(STAGGER_MAX,
+                  Math.max(STAGGER_MIN, WRITE_BUDGET / Math.max(total, 1)));
+
+  let n = 0;
+  const html = [];
+  const schedule = [];   // ready time per unit, in ms after start
+
+  for (const p of paras){
+    html.push(`<p>`);
+    for (const raw of p.trim().split(/\s+/)){
+      /* Trailing marks belong to the separator that follows, since the
+         separator is what stood in for them. Anything inside the word,
+         like an apostrophe, stays with the word. */
+      const m = raw.match(/^(.*?)([^A-Za-z0-9]*)$/);
+      const core = m[1];
+      const tail = m[2];
+
+      const letters = core.toUpperCase().replace(/[^A-Z]/g, "");
+      if (!letters) continue;
+
+      const glyphs = [];
+      for (const ch of letters){
+        glyphs.push(glyphSVG(ch.charCodeAt(0) - 65, Math.round(n * stagger)));
+        n++;
+      }
+      /* A unit is legible only once its last stroke has landed. */
+      schedule.push(Math.round((n - 1) * stagger) + STROKE_TIME);
+
+      html.push(
+        `<span class="w">` +
+          `<span class="ciph">${glyphs.join("")}</span>` +
+          `<span class="plain">${escapeHTML(core)}</span>` +
+        `</span>`
+      );
+
+      schedule.push(Math.round(n * stagger) + STROKE_TIME);
+      html.push(
+        `<span class="w sep">` +
+          `<span class="ciph">${glyphSVG(SEPARATOR, Math.round(n * stagger))}</span>` +
+          `<span class="plain">${escapeHTML(tail)}</span>` +
+        `</span>`
+      );
+      n++;
+    }
+    html.push(`</p>`);
+  }
+
+  bodyEl.innerHTML = html.join("");
+
+  const nodes = bodyEl.querySelectorAll(".w");
+  words = Array.from(nodes, (el, i) => ({ el, readyAt: schedule[i], box:null, lit:false }));
+}
+
+function escapeHTML(s){
+  return s.replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+}
+
+/* Rectangles are cached in *document* coordinates, not viewport ones.
+   Scrolling shifts every word by the same amount, so it needs no
+   re-measure at all — only a resize does. */
+function measure(){
+  const sx = window.scrollX, sy = window.scrollY;
+  for (const w of words){
+    const r = w.el.getBoundingClientRect();
+    w.box = { l:r.left + sx, t:r.top + sy, r:r.right + sx, b:r.bottom + sy };
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   4. THE TORCH
+   ══════════════════════════════════════════════════════════════ */
+let px = -9999, py = -9999, pointerLive = false, queued = false;
+
+/* The handler only records where the pointer is. Every style write
+   happens once per frame, inside paint. */
+function movePointer(x, y){
+  px = x; py = y;
+  pointerLive = true;
+  request();
+}
+
+function request(){
+  if (queued) return;
+  queued = true;
+  requestAnimationFrame(paint);
+}
+
+function paint(){
+  queued = false;
+  const now = performance.now() - startedAt;
+
+  if (pointerLive){
+    const off = radius * 2;
+    torchEl.style.transform = `translate3d(${px - off}px, ${py - off}px, 0)`;
+    torchEl.classList.add("on");
+  }
+
+  /* Pointer into document space, to match the cached boxes. */
+  const dx0 = px + window.scrollX;
+  const dy0 = py + window.scrollY;
+  const rr  = radius * radius;
+
+  for (const w of words){
+    let lit = false;
+    if (pointerLive && w.box && now >= w.readyAt){
+      /* Distance from the pointer to the nearest point of the word. */
+      const dx = dx0 < w.box.l ? w.box.l - dx0 : (dx0 > w.box.r ? dx0 - w.box.r : 0);
+      const dy = dy0 < w.box.t ? w.box.t - dy0 : (dy0 > w.box.b ? dy0 - w.box.b : 0);
+      lit = (dx*dx + dy*dy) <= rr;
+    }
+    if (lit !== w.lit){
+      w.lit = lit;
+      w.el.classList.toggle("lit", lit);
+    }
+  }
+}
+
+/* The writing-in outruns the reader, so keep repainting until the
+   last glyph has landed — words go live as the ink catches up. Once
+   the ink is dry, the animations are retired so they stop occupying
+   the browser's timeline. */
+function tickWhileWriting(){
+  request();
+  if (performance.now() - startedAt < WRITE_BUDGET + STROKE_TIME + 400){
+    requestAnimationFrame(tickWhileWriting);
+  } else {
+    bodyEl.classList.add("dry");
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   5. THE GATE
+   ══════════════════════════════════════════════════════════════ */
+const gate   = document.getElementById("gate");
+const seal   = document.getElementById("seal");
+const keyIn  = document.getElementById("key");
+const denyEl = document.getElementById("deny");
+
+function attempt(){
+  if (keyIn.value.trim().toLowerCase() === PASSWORD.toLowerCase()){
+    unfold();
+  } else {
+    denyEl.classList.add("show");
+    seal.classList.remove("shake");
+    void seal.offsetWidth;
+    seal.classList.add("shake");
+    keyIn.select();
+  }
+}
+
+document.getElementById("unfold").addEventListener("click", attempt);
+keyIn.addEventListener("keydown", e => { if (e.key === "Enter") attempt(); });
+keyIn.addEventListener("input", () => denyEl.classList.remove("show"));
+window.addEventListener("load", () => keyIn.focus());
+
+function unfold(){
+  gate.classList.add("gone");
+  setTimeout(() => gate.remove(), 750);
+
+  leafEl.hidden = false;
+  dialEl.hidden = false;
+
+  compose();                      // injecting the glyphs starts their animation
+  startedAt = performance.now();
+  requestAnimationFrame(() => { measure(); tickWhileWriting(); });
+
+  hintEl.textContent = coarse
+    ? "Drag a finger across the page to read it."
+    : "Move the cursor across the page to read it.";
+  setTimeout(() => hintEl.classList.add("show"), 1400);
+  setTimeout(() => hintEl.classList.remove("show"), 8000);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   6. INPUT
+   ══════════════════════════════════════════════════════════════ */
+window.addEventListener("pointermove", e => movePointer(e.clientX, e.clientY),
+                        { passive:true });
+
+window.addEventListener("pointerdown", e => movePointer(e.clientX, e.clientY),
+                        { passive:true });
+
+/* Leaving the window puts the torch out and the letters fold back. */
+window.addEventListener("pointerleave", () => {
+  pointerLive = false;
+  torchEl.classList.remove("on");
+  request();
+});
+
+/* On a touch screen the beam follows the fingertip. The page still
+   scrolls normally underneath it — the text slides through the light. */
+window.addEventListener("touchmove", e => {
+  const t = e.touches[0];
+  if (t) movePointer(t.clientX, t.clientY);
+}, { passive:true });
+
+window.addEventListener("touchend", () => {
+  setTimeout(() => {
+    pointerLive = false;
+    torchEl.classList.remove("on");
+    request();
+  }, 900);
+}, { passive:true });
+
+/* Scrolling moves every word by the same offset, so the cached boxes
+   stay valid — this only needs a repaint. */
+window.addEventListener("scroll", request, { passive:true });
+
+window.addEventListener("resize", () => { measure(); request(); });
+
+/* ══════════════════════════════════════════════════════════════
+   7. THE DIAL
+   ══════════════════════════════════════════════════════════════ */
+const radIn  = document.getElementById("rad");
+const radOut = document.getElementById("radout");
+
+radius = Number(radIn.value);
+radOut.value = radius;
+document.documentElement.style.setProperty("--radius", radius + "px");
+
+radIn.addEventListener("input", () => {
+  radius = Number(radIn.value);
+  radOut.value = radius;
+  document.documentElement.style.setProperty("--radius", radius + "px");
+  request();
+});
+</script>
+</body>
+</html>
