@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Summons to the Licensing Table</title>
+
+<!-- Discord / social embed. Discord needs ABSOLUTE urls. Hosted on GitHub Pages at relaxe-ss14.github.io/DNDnD -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Adventurers' Guild of Pineward">
+<meta property="og:title" content="You have been summoned to the Licensing Table">
+<meta property="og:description" content="A sealed letter bearing the guild's mark. A play-by-post D&amp;D campaign for new hands seeking their Mercenary License. Four or five seats. Apply inside.">
+<meta property="og:url" content="https://relaxe-ss14.github.io/DNDnD/">
+<meta property="og:image" content="https://relaxe-ss14.github.io/DNDnD/embed.jpg">
+<meta property="og:image:width" content="800">
+<meta property="og:image:height" content="420">
+<meta property="og:image:alt" content="A large parchment envelope sealed with gold-flecked red wax">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#b8963e">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink: #2b2118;
+    --ink-soft: #5a4a3a;
+    --gold: #b8963e;
+    --gold-bright: #d9b85c;
+    --parchment: #f1e5c9;
+    --env-back: #bda37a;
+    --env-front: #d8c29a;
+    --env-flap: #cdb68b;
+    --wax: #8e1f1f;
+    --night: #0c0b0a;
+    --display: "Cinzel", "Trajan Pro", "Palatino Linotype", Georgia, serif;
+    --body: "IM Fell English", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--night);
+    color: var(--parchment);
+    font-family: var(--body);
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at 50% 30%, #3a2c1f 0%, #1a1511 45%, var(--night) 80%);
+    padding-inline: 16px;
+  }
+
+  .stage {
+    max-width: 720px;
+    margin: 0 auto;
+    padding-block: clamp(3rem, 10vh, 6rem) 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .kicker {
+    margin: 0 0 clamp(6rem, 20vh, 10rem); /* room for the flap and letter to rise into */
+    color: var(--gold-bright);
+    font-family: var(--display);
+    font-size: clamp(0.8rem, 2.4vw, 1rem);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Envelope ---------- */
+  .envelope {
+    position: relative;
+    width: min(560px, 100%);
+    aspect-ratio: 16 / 10;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    perspective: 1400px;
+    filter: drop-shadow(0 24px 30px #000000b0);
+    font: inherit;
+    color: inherit;
+  }
+
+  .envelope:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 10px; }
+
+  .env-back, .env-front, .env-flap, .letter { position: absolute; display: block; }
+
+  .env-back {
+    inset: 0;
+    background: var(--env-back);
+    border-radius: 6px;
+  }
+
+  .letter {
+    left: 6%;
+    right: 6%;
+    top: 7%;
+    height: 86%;
+    padding: 9% 8% 0;
+    background: var(--parchment);
+    border-radius: 3px;
+    color: var(--ink);
+    font-family: var(--display);
+    font-size: clamp(0.85rem, 2.6vw, 1.15rem);
+    z-index: 1;
+    transition: transform 0.9s cubic-bezier(.2,.8,.2,1) 0.55s;
+  }
+
+  .letter small {
+    display: block;
+    margin-top: 0.5em;
+    font-family: var(--body);
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 0.8em;
+  }
+
+  .env-front {
+    inset: 0;
+    z-index: 2;
+    border-radius: 6px;
+    background:
+      linear-gradient(160deg, #0000 55%, #00000018),
+      var(--env-front);
+    clip-path: polygon(0 0, 50% 56%, 100% 0, 100% 100%, 0 100%);
+  }
+
+  .env-address {
+    position: absolute;
+    left: 0; right: 0; bottom: 12%;
+    z-index: 3;
+    color: var(--ink);
+    font-family: var(--body);
+    font-style: italic;
+    font-size: clamp(0.9rem, 2.8vw, 1.25rem);
+    pointer-events: none;
+  }
+
+  .env-flap {
+    left: 0; right: 0; top: 0;
+    height: 60%;
+    z-index: 4;
+    background: linear-gradient(180deg, var(--env-flap), #bfa679);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    transition: transform 0.6s ease-in, z-index 0s linear 0.3s;
+  }
+
+  .seal {
+    position: absolute;
+    left: 50%;
+    top: 60%;
+    width: 22%;
+    aspect-ratio: 1;
+    z-index: 5;
+    transform: translate(-50%, -50%);
+    transition: transform 0.35s ease-in, opacity 0.35s ease-in;
+  }
+
+  .seal svg { width: 100%; height: 100%; display: block; }
+
+  .envelope:hover .seal { transform: translate(-50%, -50%) rotate(-6deg) scale(1.04); }
+
+  .envelope.is-open { cursor: default; }
+  .envelope.is-open .seal { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  .envelope.is-open .env-flap { transform: rotateX(180deg); z-index: 0; }
+  .envelope.is-open .letter { transform: translateY(-48%); }
+
+  .hint {
+    margin: 2rem 0 0;
+    color: #cbb892;
+    font-style: italic;
+    font-size: 1.05rem;
+    transition: opacity 0.4s;
+  }
+  .kicker { transition: opacity 0.4s; }
+  .is-opened .hint, .is-opened .kicker { opacity: 0; }
+
+  /* ---------- Invitation ---------- */
+  .invitation {
+    width: min(640px, 100%);
+    margin-top: 3rem;
+    padding: clamp(1.5rem, 5vw, 3rem);
+    background:
+      radial-gradient(ellipse at 50% 0%, #fff8e6 0%, #0000 60%),
+      var(--parchment);
+    color: var(--ink);
+    text-align: left;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #0000001f, inset 0 0 60px #8a6a3a40, 0 20px 40px #000000a0;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .invitation.is-visible { opacity: 1; transform: none; }
+
+  .invitation h1 {
+    margin: 0 0 0.2em;
+    font-family: var(--display);
+    font-size: clamp(1.4rem, 5vw, 2.1rem);
+    line-height: 1.15;
+    text-align: center;
+    color: #4a2e12;
+  }
+
+  .invitation .from {
+    margin: 0 0 1.6em;
+    text-align: center;
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+
+  .invitation p { font-size: clamp(1.02rem, 2.8vw, 1.18rem); line-height: 1.6; margin: 0 0 1em; }
+
+  .signature { text-align: right; font-style: italic; margin-top: 1.4em; }
+  .signature span { display: block; font-family: var(--display); font-style: normal; font-size: 0.85em; letter-spacing: 0.08em; color: var(--ink-soft); }
+
+  .rule { border: 0; height: 1px; margin: 2em 0; background: linear-gradient(90deg, #0000, var(--gold), #0000); }
+
+  .terms { display: grid; grid-template-columns: max-content 1fr; gap: 0.55em 1.2em; margin: 0; font-size: 1.05rem; }
+  .terms dt { font-family: var(--display); font-size: 0.8em; letter-spacing: 0.1em; text-transform: uppercase; color: #6b4b22; padding-top: 0.25em; }
+  .terms dd { margin: 0; }
+
+  .accept {
+    display: block;
+    width: fit-content;
+    margin: 2.2em auto 0;
+    padding: 0.8em 1.8em;
+    border: 1px solid #5c1414;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #a52a2a, var(--wax));
+    color: #fbeede;
+    font-family: var(--display);
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+    text-transform: uppercase;
+    box-shadow: inset 0 1px 0 #ffffff30, 0 4px 10px #00000050;
+  }
+  .accept:hover, .accept:focus-visible { background: linear-gradient(180deg, #b83232, #9c2525); }
+  .fine { margin: 0.8em 0 0; text-align: center; font-style: italic; font-size: 0.95rem; color: var(--ink-soft); }
+
+  @media (max-width: 480px) {
+    .terms { grid-template-columns: 1fr; gap: 0.15em; }
+    .terms dd { margin-bottom: 0.7em; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01s !important; transition-delay: 0s !important; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <p class="kicker">A letter bearing the guild seal has found you</p>
+
+  <button class="envelope" type="button" aria-expanded="false" aria-controls="invitation">
+    <span class="env-back"></span>
+    <span class="letter">A Summons<small>to the Licensing Table</small></span>
+    <span class="env-front"></span>
+    <span class="env-address">To the Bearer, Seeker of License</span>
+    <span class="env-flap"></span>
+    <span class="seal" aria-hidden="true">
+      <svg viewBox="-120 -120 240 240">
+        <defs>
+          <radialGradient id="wax" cx="40%" cy="35%" r="70%">
+            <stop offset="0" stop-color="#c23a33"/>
+            <stop offset="0.6" stop-color="#8e1f1f"/>
+            <stop offset="1" stop-color="#5a1010"/>
+          </radialGradient>
+        </defs>
+        <path d="M0-112 C28-110 40-98 62-94 C86-90 98-70 104-48 C112-22 116 0 110 26 C104 54 96 76 72 92 C50 108 26 114 0 112 C-30 114-52 104-76 90 C-98 76-110 50-112 22 C-116-6-106-30-96-52 C-84-78-62-98-36-106 C-22-110-12-112 0-112 Z" fill="url(#wax)"/>
+        <circle r="84" fill="none" stroke="#5a1010" stroke-width="4" opacity="0.7"/>
+        <g fill="none" stroke="#e0b95a" stroke-width="7" stroke-linecap="round" opacity="0.92" transform="scale(0.72)">
+          <path d="M 0 -96 A 96 96 0 0 1 83.14 48 A 96 96 0 0 1 0 -96 Z"/>
+          <path d="M 83.14 48 A 96 96 0 0 1 -83.14 48 A 96 96 0 0 1 83.14 48 Z"/>
+          <path d="M -83.14 48 A 96 96 0 0 1 0 -96 A 96 96 0 0 1 -83.14 48 Z"/>
+          <circle r="62"/>
+        </g>
+      </svg>
+    </span>
+  </button>
+
+  <p class="hint">Break the seal</p>
+
+  <article class="invitation" id="invitation" hidden>
+    <h1>A Summons to the Licensing Table</h1>
+    <p class="from">From the Adventurers' Guild of Pineward</p>
+
+    <p>To the bearer of this letter,</p>
+    <p>The Guild has taken note of you and invites you to apply for probationary service. Four or five applicants will be chosen and summoned to the Licensing Table, seated beside companions of the Guild's choosing, handed a first contract, and, should they return with the job done, granted a Mercenary License.</p>
+    <p>Complete the enclosed application. Bring your weapon, your wits, and a name worth writing on a card.</p>
+    <p class="signature">Warden Hale<span>Signer of Licenses</span></p>
+
+    <hr class="rule">
+
+    <dl class="terms">
+      <dt>The Game</dt>
+      <dd>Dungeons &amp; Dragons, 2024 rules. New characters start at level 1. New and returning players welcome.</dd>
+      <dt>The Table</dt>
+      <dd>Play-by-post on Discord, with scenes, maps and character sheets in Foundry VTT. No need to be online at the same time as anyone.</dd>
+      <dt>The Party</dt>
+      <dd>Four or five players, chosen from the applications.</dd>
+      <dt>The Pace</dt>
+      <dd>Reply within 48 hours when a new scene goes up. You'll be pinged.</dd>
+      <dt>The Books</dt>
+      <dd>Player's Handbook, Dungeon Master's Guide, Monster Manual, Tasha's, Xanathar's and the Guildmasters' Guide to Ravnica.</dd>
+      <dt>First Posting</dt>
+      <dd><!-- TODO: start date -->To be announced</dd>
+    </dl>
+
+    <!-- Links to the Google Form application. The Foundry link is in the form confirmation message. -->
+    <a class="accept" href="https://forms.gle/Aas9qcWVa7uS7YTa8" target="_blank" rel="noopener">Answer the Summons</a>
+    <p class="fine">About ten minutes. Chosen applicants receive a Discord invite.</p>
+  </article>
+</main>
+
+<script>
+  const envelope = document.querySelector(".envelope");
+  const invitation = document.getElementById("invitation");
+  const stage = document.querySelector(".stage");
+
+  function openLetter(instant) {
+    if (envelope.classList.contains("is-open")) return;
+    envelope.classList.add("is-open");
+    envelope.setAttribute("aria-expanded", "true");
+    stage.classList.add("is-opened");
+    invitation.hidden = false;
+    const reveal = () => {
+      invitation.classList.add("is-visible");
+      if (!instant) invitation.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    instant ? reveal() : setTimeout(reveal, 1300);
+  }
+
+  envelope.addEventListener("click", () => openLetter(false));
+  if (new URLSearchParams(location.search).has("open")) openLetter(true);
+</script>
+</body>
+</html>
